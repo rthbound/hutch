@@ -7,11 +7,10 @@ module Hutch
   class Broker
     include Logging
 
-    attr_accessor :connection, :channel, :exchange, :api_client, :publisher
+    attr_accessor :connection, :channel, :exchange, :api_client
 
-    def initialize(config = nil, publisher = Hutch::Publisher)
+    def initialize(config = nil)
       @config    = config || Hutch::Config
-      @publisher = publisher
     end
 
     def connect(options = {})
@@ -98,6 +97,10 @@ module Hutch
 
     def declare_exchange!(*args)
       @exchange = declare_exchange(*args)
+    end
+
+    def declare_publisher!
+      @publisher = Hutch::Publisher.new(connection, channel, exchange, @config)
     end
 
     # Set up the connection to the RabbitMQ management API. Unfortunately, this
@@ -217,7 +220,11 @@ module Hutch
     end
 
     def publish(*args)
-      publisher.new(connection, channel, exchange, @config).publish(*args)
+      publisher.publish(*args)
+    end
+
+    def publisher
+      @publisher ||= declare_publisher!
     end
 
     def confirm_select(*args)
